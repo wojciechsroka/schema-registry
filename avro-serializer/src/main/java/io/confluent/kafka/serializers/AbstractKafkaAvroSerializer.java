@@ -34,6 +34,9 @@ import java.util.Map;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import kafka.utils.VerifiableProperties;
 
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+
 public abstract class AbstractKafkaAvroSerializer extends AbstractKafkaAvroSerDe {
 
   private final EncoderFactory encoderFactory = EncoderFactory.get();
@@ -58,6 +61,32 @@ public abstract class AbstractKafkaAvroSerializer extends AbstractKafkaAvroSerDe
     } catch (io.confluent.common.config.ConfigException e) {
       throw new ConfigException(e.getMessage());
     }
+  }
+  
+  protected byte[] serializeImpl(String subject, Headers headers, Object object)
+          throws SerializationException {
+
+    byte[] serializedPayload = serializeImpl(subject,object);
+    Header schemaIdInHeader = headers.lastHeader(AbstractKafkaAvroSerDeConfig.SCHEMA_IN_HEADER);
+    Header schemaRegistryIdHeader =
+            headers.lastHeader(AbstractKafkaAvroSerDeConfig.SCHEMA_ID);
+    if (schemaRegistryIdHeader != null && schemaIdInHeader != null) {
+
+      byte[] schemaIdInHeaderByteArray = schemaIdInHeader.value();
+      boolean schemaInHeader = schemaIdInHeaderByteArray.length == 1
+              && schemaIdInHeaderByteArray[0] == 1;
+
+      if (schemaInHeader) {
+        byte[] serializedPayloadWithoutSchemaId = new byte[serializedPayload.length - 1 - idSize];
+        System.arraycopy(serializedPayload,
+                idSize + 1,
+                serializedPayloadWithoutSchemaId,
+                0,
+                serializedPayloadWithoutSchemaId.length);
+        serializedPayload = serializedPayloadWithoutSchemaId;
+      }
+    }
+    return serializedPayload;
   }
 
   protected byte[] serializeImpl(String subject, Object object) throws SerializationException {
