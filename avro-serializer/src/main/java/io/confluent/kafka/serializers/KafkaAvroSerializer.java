@@ -16,7 +16,8 @@
 
 package io.confluent.kafka.serializers;
 
-import org.apache.kafka.common.serialization.Serializer;
+import org.apache.kafka.common.header.Headers;
+import org.apache.kafka.common.serialization.ExtendedSerializer;
 
 import java.util.Map;
 
@@ -52,6 +53,11 @@ public class KafkaAvroSerializer extends AbstractKafkaAvroSerializer
   @Override
   public byte[] serialize(String topic, Object record) {
     return serializeImpl(getSubjectName(topic, isKey, record), record);
+  }
+  
+  @Override
+  public byte[] serialize(String topic, Headers headers, Object record) {
+    return serializeImpl(getSubjectName(topic, isKey), headers, record);
   }
 
   @Override
