@@ -76,6 +76,9 @@ public class AbstractKafkaAvroSerDeConfig extends AbstractConfig {
   public static final String VALUE_SUBJECT_NAME_STRATEGY_DOC =
       "Determines how to construct the subject name under which the value schema is registered "
       + "with the schema registry. By default, <topic>-value is used as subject.";
+  
+  public static final String SCHEMA_IN_HEADER = "schema.registry.schemaInHeader";
+  public static final String SCHEMA_ID = "schema.registry.schemaId";
 
   public static ConfigDef baseConfigDef() {
     return new ConfigDef()
