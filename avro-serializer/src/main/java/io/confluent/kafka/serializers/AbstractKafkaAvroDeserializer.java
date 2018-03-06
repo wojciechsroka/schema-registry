@@ -36,6 +36,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import io.confluent.kafka.schemaregistry.client.rest.exceptions.RestClientException;
 import kafka.utils.VerifiableProperties;
 
+import org.apache.kafka.common.header.Header;
+import org.apache.kafka.common.header.Headers;
+
 public abstract class AbstractKafkaAvroDeserializer extends AbstractKafkaAvroSerDe {
 
   public static final String SCHEMA_REGISTRY_SCHEMA_VERSION_PROP =
@@ -102,6 +105,34 @@ public abstract class AbstractKafkaAvroDeserializer extends AbstractKafkaAvroSer
    */
   protected Object deserialize(byte[] payload, Schema readerSchema) throws SerializationException {
     return deserialize(false, null, null, payload, readerSchema);
+  }
+  
+  
+  /**
+   * Deserializes the payload with schema information id included in kafka header
+   *
+   * @param payload serialized data
+   * @param headers kafka headers
+   * @return the deserialized object
+   */
+  protected Object deserialize(byte[] payload, Headers headers) throws SerializationException {
+    Header schemaIdInHeader = headers.lastHeader(AbstractKafkaAvroSerDeConfig.SCHEMA_IN_HEADER);
+    Header schemaIdHeader = headers.lastHeader(AbstractKafkaAvroSerDeConfig.SCHEMA_ID);
+    if (schemaIdInHeader != null && schemaIdHeader != null) {
+      byte[] schemaIdInHeaderByteArray = schemaIdInHeader.value();
+      boolean schemaInHeader = schemaIdInHeaderByteArray.length == 1
+              && schemaIdInHeaderByteArray[0] == 1;
+
+      if (schemaInHeader && payload != null) {
+        byte[] extendedPayload = new byte[payload.length + 1 + idSize];
+        extendedPayload[0] = MAGIC_BYTE;
+        byte[] schemaId = schemaIdHeader.value();
+        System.arraycopy(schemaId, 0, extendedPayload, 1, schemaId.length);
+        System.arraycopy(payload, 0, extendedPayload, idSize + 1, payload.length);
+        return deserialize(false, null, null, extendedPayload, null);
+      }
+    }
+    return deserialize(false, null, null, payload, null);
   }
 
   // The Object return type is a bit messy, but this is the simplest way to have
