@@ -22,7 +22,8 @@ import java.util.Map;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 
-public class KafkaAvroSerializer extends AbstractKafkaAvroSerializer implements Serializer<Object> {
+public class KafkaAvroSerializer extends AbstractKafkaAvroSerializer 
+        implements ExtendedSerializer<Object> {
 
   private boolean isKey;
 
