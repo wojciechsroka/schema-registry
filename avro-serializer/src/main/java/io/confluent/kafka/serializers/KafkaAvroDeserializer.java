@@ -17,14 +17,15 @@
 package io.confluent.kafka.serializers;
 
 import org.apache.avro.Schema;
-import org.apache.kafka.common.serialization.Deserializer;
+import org.apache.kafka.common.serialization.ExtendedDeserializer;
+import org.apache.kafka.common.header.Headers;
 
 import java.util.Map;
 
 import io.confluent.kafka.schemaregistry.client.SchemaRegistryClient;
 
 public class KafkaAvroDeserializer extends AbstractKafkaAvroDeserializer
-    implements Deserializer<Object> {
+    implements ExtendedDeserializer<Object> {
 
   private boolean isKey;
 
@@ -60,6 +61,11 @@ public class KafkaAvroDeserializer extends AbstractKafkaAvroDeserializer
    */
   public Object deserialize(String s, byte[] bytes, Schema readerSchema) {
     return deserialize(bytes, readerSchema);
+  }
+  
+  @Override
+  public Object deserialize(String s, Headers headers, byte[] bytes) {
+    return deserialize(bytes,headers);
   }
 
   @Override
